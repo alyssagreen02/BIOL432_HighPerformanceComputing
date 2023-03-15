@@ -1,0 +1,62 @@
+---
+title: "High Performance Computing"
+author: "Alyssa Green"
+date: "2023-03-15"
+output: html_document
+---
+
+## 3. Load Libraries
+```{r}
+library(doParallel)
+library(parallel)
+library(foreach)
+```
+
+## 4. Determine number of cores
+```{r}
+detectCores()
+```
+There are 8 cores on my device.
+
+## 5/6. Loop with time check
+```{r}
+Start_Time_multi=Sys.time()
+mean_random_numbers=c()
+loop=for (i in 1:4000) {
+  random_numbers=rnorm(100000, mean=10, sd=3)
+  mean_random_numbers[i]=mean(random_numbers)
+}
+Stop_Time_multi=Sys.time()
+
+Time_multi=Stop_Time_multi-Start_Time_multi
+Time_multi
+```
+
+## 7. Prediction
+I predict that a multi-threaded program will run eight times faster than the serial program with a time of 4.87963 seconds since we are running eight different iterations (one on each core) simultaneously rather than running the iterations one at a time.
+
+## Parallel code
+```{r}
+Cores <- parallel::makeCluster(detectCores()) 
+doParallel::registerDoParallel(Cores)
+
+Start_Time_parallel=Sys.time()
+
+mean_random_numbers_parallel=c()
+
+foreach(i=1:4000, .combine=rbind) %dopar%
+{
+  random_numbers_parallel=rnorm(100000, mean=10, sd=3)
+  mean_random_numbers_parallel[i]=mean(random_numbers_parallel)
+}
+
+Stop_Time_parallel=Sys.time()
+
+parallel::stopCluster(Cores) 
+
+Time_parallel=Stop_Time_parallel-Start_Time_parallel
+Time_parallel
+```
+
+## Results
+The run times for my parallel and serial loops were 10.47711 seconds and 39.03701 seconds, respectively, and the theoretical run time I calculated for the parallel loop was 4.87963 seconds. The theoretical run time is much shorter than the actual run time of my program because it takes more time for the parallel loop to combine all the data points running in different threads.
